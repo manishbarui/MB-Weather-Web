@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Web</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+
+    .weather-web {
+      width: 100%;
+      max-width: 450px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .weather-web:hover {
+      transform: translateY(-5px);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .logo img {
+      width: 120px;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #searchCity {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      background: #f1f3f4;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    #searchCity:focus {
+      outline: none;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+    }
+
+    #searchBtn {
+      padding: 12px 25px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s ease;
+    }
+
+    #searchBtn:hover {
+      background: #0056b3;
+    }
+
+    .weather-info {
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+    }
+
+    .weather-info.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #location {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .current-weather {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .icon i {
+      font-size: 3.5rem;
+      color: #007bff;
+    }
+
+    .temp {
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+
+    #weather-condition {
+      font-size: 1.1rem;
+      color: #7f8c8d;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+      font-size: 0.95rem;
+      color: #7f8c8d;
+    }
+
+    .details strong {
+      color: #2c3e50;
+    }
+
+    footer {
+      text-align: center;
+      position: fixed; /* Changed to fixed positioning */
+      bottom: 10px; /* Position at the bottom */
+      width: 100%;
+      margin-top: 30px;
+      font-size: 0.85rem;
+      color: #95a5a6;
+    }
+
+    .loading {
+      display: none;
+      font-size: 1rem;
+      color: #7f8c8d;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    @media (max-width: 500px) {
+      .weather-web {
+        margin: 20px;
+        padding: 20px;
+      }
+
+      .temp {
+        font-size: 2.5rem;
+      }
+
+      .details {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="weather-web">
+    <header>
+      <div class="logo">
+        <img src="https://openweathermap.org/themes/openweathermap/assets/img/logo_white_cropped.png" alt="Weather Logo">
+      </div>
+      <h2>Weather Web</h2>
+    </header>
+
+    <div class="search-container">
+      <input type="text" id="searchCity" placeholder="Enter city name">
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <div class="loading">Loading...</div>
+
+    <div class="weather-info">
+      <h3 id="location"></h3>
+      <div class="current-weather">
+        <div class="icon"><i class="fas fa-cloud"></i></div>
+        <div class="temp-info">
+          <p class="temp"></p>
+          <p id="weather-condition"></p>
+        </div>
+      </div>
+      <div class="details">
+        <p><strong>Wind:</strong> <span id="wind"></span></p>
+        <p><strong>Pressure:</strong> <span id="pressure"></span></p>
+        <p><strong>Humidity:</strong> <span id="humidity"></span></p>
+        <p><strong>Dew Point:</strong> <span id="dewPoint"></span></p>
+        <p><strong>Visibility:</strong> <span id="visibility"></span></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 Manish Barui-Weather Web. All rights reserved.</footer>
+  
+  <script>
+    const searchBtn = document.getElementById('searchBtn');
+    const searchCity = document.getElementById('searchCity');
+    const weatherInfo = document.querySelector('.weather-info');
+    const loading = document.querySelector('.loading');
+
+    searchBtn.addEventListener('click', () => {
+      const city = searchCity.value.trim();
+      if (city) getWeather(city);
+    });
+
+    searchCity.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const city = searchCity.value.trim();
+        if (city) getWeather(city);
+      }
+    });
+
+    async function getWeather(city) {
+      const apiKey = '6ae5fe72c30bb6c5aa2fa468ebdff6aa';
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+
+      try {
+        loading.style.display = 'block';
+        weatherInfo.classList.remove('visible');
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('City not found😔.Check if you have correctly entered the city spelling🙂.');
+
+        const data = await response.json();
+        updateWeatherUI(data);
+      } catch (error) {
+        alert(error.message || 'Something went wrong!');
+      } finally {
+        loading.style.display = 'none';
+      }
+    }
+
+    function updateWeatherUI(data) {
+      const weatherIcons = {
+        'clear': 'fa-sun',
+        'clouds': 'fa-cloud',
+        'rain': 'fa-cloud-showers-heavy',
+        'snow': 'fa-snowflake',
+        'thunderstorm': 'fa-bolt',
+        'drizzle': 'fa-cloud-rain',
+        'mist': 'fa-smog'
+      };
+
+      const location = `${data.name}, ${data.sys.country}`;
+      const temp = `${Math.round(data.main.temp)}°C`;
+      const feelsLike = `Feels like ${Math.round(data.main.feels_like)}°C`;
+      const condition = data.weather[0].description;
+      const wind = `${data.wind.speed} m/s ${getDirection(data.wind.deg)}`;
+      const pressure = `${data.main.pressure} hPa`;
+      const humidity = `${data.main.humidity}%`;
+      const dewPoint = `${Math.round(data.main.temp - ((100 - data.main.humidity) / 5))}°C`;
+      const visibility = `${data.visibility / 1000} km`;
+      const weatherMain = data.weather[0].main.toLowerCase();
+      const iconClass = weatherIcons[weatherMain] || 'fa-cloud';
+
+      document.getElementById('location').textContent = location;
+      document.querySelector('.temp').textContent = temp;
+      document.getElementById('weather-condition').textContent = `${feelsLike} - ${condition}`;
+      document.getElementById('wind').textContent = wind;
+      document.getElementById('pressure').textContent = pressure;
+      document.getElementById('humidity').textContent = humidity;
+      document.getElementById('dewPoint').textContent = dewPoint;
+      document.getElementById('visibility').textContent = visibility;
+      document.querySelector('.icon i').className = `fas ${iconClass}`;
+
+      weatherInfo.classList.add('visible');
+    }
+
+    function getDirection(deg) {
+      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      return directions[Math.round(deg / 45) % 8];
+    }
+  </script>
+</body>
+</html> 
