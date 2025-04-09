@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weather Web</title>
+  <title>MB-Weather Web</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    * {
+      * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -147,7 +147,7 @@
 
     footer {
       text-align: center;
-      position: fixed; /* Changed to fixed positioning */
+      position: fixed;
       bottom: 10px; /* Position at the bottom */
       width: 100%;
       margin-top: 30px;
@@ -193,7 +193,7 @@
       <button id="searchBtn">Search</button>
     </div>
 
-    <div class="loading">Loading...</div>
+    <div class="loading">Loading...💬</div>
 
     <div class="weather-info">
       <h3 id="location"></h3>
@@ -221,6 +221,7 @@
     const searchCity = document.getElementById('searchCity');
     const weatherInfo = document.querySelector('.weather-info');
     const loading = document.querySelector('.loading');
+    const apiKey = 'beeWJKZf49N4uQnqkHQTRNoyLiAMiODm';
 
     searchBtn.addEventListener('click', () => {
       const city = searchCity.value.trim();
@@ -235,18 +236,28 @@
     });
 
     async function getWeather(city) {
-      const apiKey = '6ae5fe72c30bb6c5aa2fa468ebdff6aa';
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
-
       try {
         loading.style.display = 'block';
         weatherInfo.classList.remove('visible');
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('City not found😔.Check if you have correctly entered the city spelling🙂.');
+        // Step 1: Get location key from city name
+        const locationUrl = `http://dataservice.accuweather.com/locations/v1/cities/search?apikey=${apiKey}&q=${encodeURIComponent(city)}`;
+        const locationResponse = await fetch(locationUrl);
+        if (!locationResponse.ok) throw new Error('City not found😔.Check if you have correctly entered the city spelling🙂.');
+        
+        const locationData = await locationResponse.json();
+        if (!locationData[0]) throw new Error('City not found');
+        
+        const locationKey = locationData[0].Key;
+        const locationName = `${locationData[0].LocalizedName}, ${locationData[0].Country.ID}`;
 
-        const data = await response.json();
-        updateWeatherUI(data);
+        // Step 2: Get current weather conditions
+        const weatherUrl = `http://dataservice.accuweather.com/currentconditions/v1/${locationKey}?apikey=${apiKey}&details=true`;
+        const weatherResponse = await fetch(weatherUrl);
+        if (!weatherResponse.ok) throw new Error('Weather data not available');
+
+        const weatherData = await weatherResponse.json();
+        updateWeatherUI(weatherData[0], locationName);
       } catch (error) {
         alert(error.message || 'Something went wrong!');
       } finally {
@@ -254,28 +265,30 @@
       }
     }
 
-    function updateWeatherUI(data) {
+    function updateWeatherUI(data, location) {
       const weatherIcons = {
-        'clear': 'fa-sun',
-        'clouds': 'fa-cloud',
-        'rain': 'fa-cloud-showers-heavy',
-        'snow': 'fa-snowflake',
-        'thunderstorm': 'fa-bolt',
-        'drizzle': 'fa-cloud-rain',
-        'mist': 'fa-smog'
+        'Clear':'fa-sun',
+        'Sunny': 'fa-sun',
+        'Cloudy': 'fa-cloud',
+        'Rain': 'fa-cloud-showers-heavy',
+        'Snow': 'fa-snowflake',
+        'Thunderstorm': 'fa-bolt',
+        'Showers': 'fa-cloud-rain',
+        'Fog': 'fa-smog'
       };
 
-      const location = `${data.name}, ${data.sys.country}`;
-      const temp = `${Math.round(data.main.temp)}°C`;
-      const feelsLike = `Feels like ${Math.round(data.main.feels_like)}°C`;
-      const condition = data.weather[0].description;
-      const wind = `${data.wind.speed} m/s ${getDirection(data.wind.deg)}`;
-      const pressure = `${data.main.pressure} hPa`;
-      const humidity = `${data.main.humidity}%`;
-      const dewPoint = `${Math.round(data.main.temp - ((100 - data.main.humidity) / 5))}°C`;
-      const visibility = `${data.visibility / 1000} km`;
-      const weatherMain = data.weather[0].main.toLowerCase();
-      const iconClass = weatherIcons[weatherMain] || 'fa-cloud';
+      const temp = `${Math.round(data.Temperature.Metric.Value)}°C`;
+      const feelsLike = `Feels like ${Math.round(data.RealFeelTemperature.Metric.Value)}°C`;
+      const condition = data.WeatherText;
+      const wind = `${data.Wind.Speed.Metric.Value} km/h ${data.Wind.Direction.Localized}`;
+      const pressure = `${Math.round(data.Pressure.Metric.Value)} hPa`;
+      const humidity = `${data.RelativeHumidity}%`;
+      const dewPoint = `${Math.round(data.DewPoint.Metric.Value)}°C`;
+      const visibility = `${data.Visibility.Metric.Value} km`;
+      const weatherText = data.WeatherText.toLowerCase();
+      const iconClass = Object.entries(weatherIcons).find(([key]) => 
+        weatherText.includes(key.toLowerCase())
+      )?.[1] || 'fa-cloud';
 
       document.getElementById('location').textContent = location;
       document.querySelector('.temp').textContent = temp;
@@ -289,8 +302,8 @@
 
       weatherInfo.classList.add('visible');
     }
-
-    function getDirection(deg) {
+  
+  function getDirection(deg) {
       const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
       return directions[Math.round(deg / 45) % 8];
     }
