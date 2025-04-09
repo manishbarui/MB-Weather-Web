@@ -241,7 +241,7 @@
         weatherInfo.classList.remove('visible');
 
         // Step 1: Get location key from city name
-        const locationUrl = `http://dataservice.accuweather.com/locations/v1/cities/search?apikey=${apiKey}&q=${encodeURIComponent(city)}`;
+        const locationUrl = `https://dataservice.accuweather.com/locations/v1/cities/search?apikey=${apiKey}&q=${encodeURIComponent(city)}`;
         const locationResponse = await fetch(locationUrl);
         if (!locationResponse.ok) throw new Error('City not found😔.Check if you have correctly entered the city spelling🙂.');
         
@@ -252,7 +252,7 @@
         const locationName = `${locationData[0].LocalizedName}, ${locationData[0].Country.ID}`;
 
         // Step 2: Get current weather conditions
-        const weatherUrl = `http://dataservice.accuweather.com/currentconditions/v1/${locationKey}?apikey=${apiKey}&details=true`;
+        const weatherUrl = `https://dataservice.accuweather.com/currentconditions/v1/${locationKey}?apikey=${apiKey}&details=true`;
         const weatherResponse = await fetch(weatherUrl);
         if (!weatherResponse.ok) throw new Error('Weather data not available');
 
